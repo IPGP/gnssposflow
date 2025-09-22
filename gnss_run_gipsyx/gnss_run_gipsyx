@@ -163,10 +163,13 @@ fi
 if [ -z "$FORCE" ]; then 
     FORCE=0 
 fi
+# boolean for downloading orbits (default value downloads orbit)
+if [ -z "$DOWNLOAD_ORBIT" ]; then 
+    DOWNLOAD_ORBIT=1 
+fi
 # boolean for enabling debug mode (default value doesn't)
 if [ -z "$DEBUG" ]; then
     DEBUG=0 
-
 fi
 # boolean for enabling full log mode (default value doesn't)
 if [ -z "$FULLOG" ]; then
@@ -436,7 +439,6 @@ for station in $NODES; do
                 esac
 
                 # calling download_orbit
-                $PROGDIR/download_orbit 0 $ORBITSDIR -o $product -d $ymd $DOWNLOAD_OPTIONS
                 if [ ! -z $DOWNLOAD_ORBIT ]; then
                     # calling download_orbit
                     $PROGDIR/download_orbit 0 $ORBITSDIR -o $product -d $ymd $DOWNLOAD_OPTIONS
