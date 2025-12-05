@@ -237,17 +237,14 @@ for (( i=1; i<=$#; i++)); do
     -d)
               k=$((i+1))
               IFS=',' read -ra arrayDay <<< "${!k}"
-              STARTDAYS=("${arrayDay[@]}")
-              DAYLIST=()
-              for start in "${STARTDAYS[@]}"; do
-                  # include start day and previous DAYS-1 days
-                  for d in $(seq 0 $((DAYS-1))); do
-                      day=$(date -u -d "$start -$d day" +%Y/%m/%d)
-                      DAYLIST+=("$day")
-                  done
+              STARTDAYS=${arrayDay[@]}
+              DAYLIST= $()
+              for start in $STARTDAYS;do
+                  L=$(for d in $(seq $DAYS -1 0);do date -d "$d day ago $start" +%Y/%m/%d;done)
+             DAYLIST=("${DAYLIST[@]}" "${L[@]}")
               done
-              # Remove duplicates and sort; rebuild array from sorted unique lines
-              mapfile -t DAYLIST < <(printf "%s\n" "${DAYLIST[@]}" | sort -u)
+              DAYLIST=($(printf "%s\n" "${DAYLIST[@]}" | sort -u | tr '\n' ' '))
+              DAYLIST=${DAYLIST[@]} #converting to proper format
         ;;
     -lock)
         # make sure the lockfile is removed when we exit and then claim it
