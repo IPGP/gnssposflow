@@ -88,12 +88,13 @@ do
 	fi
 done
 
-# ------ RINEX2 --------------------------------------------------------
+# -------------- SELECT FILES --------------------------------------------------------
+# ------ RINEX2 ------
 # --- try RINEX2 uncompressed files
 rf=$(find $tmpdir -iname "*.??o" | sort )
 if [ ! -z "$rf" ]; then
 	echo "   Found some RINEX2 files in $rawdir: proceeding..."
-	# must convert Rinex 3 files
+	# If file has short name but is a RINEX3 inside, we downgrade it to RINEX2
 	for f in $rf; do
 		if [[ $(head -n1 $f | awk '{print $1}') == '3.01' ]]; then
 			cnvrnx3-rnx2-v3 $f +0 g
@@ -129,7 +130,7 @@ if [ ! -z "$rf" ]; then
         skipteqc=0
 fi
 
-# ------ RINEX3 --------------------------------------------------------
+# ------ RINEX3 ------
 # --- try RINEX3 uncompressed files
 rf=$(find $tmpdir -iname "*.rnx" | sort )
 if [ ! -z "$rf" ]; then
@@ -195,7 +196,11 @@ fi
 tmprnx=$tmpdir/rinex
 tmpnav=$tmpdir/nav
 
-# --- converts rawfiles to single daily Rinex
+# -------------- Apply teqc --------------------------------------------------------
+# Convert Raw To RINEX(2) If Necessary
+# Or Splice RINEX2 Files To A Single RINEX2 File 
+# Or take the 1st RINEX3 (Skip Teqc)
+
 if [ $skipteqc -eq 0 ]; then
         if [ ! -z $VERBOSE ]; then
                 echo "teqc $teqcfmt $teqcopt $obsfiles > $tmprnx"
@@ -209,6 +214,8 @@ else
         cp $obsfiles_1st $tmprnx #### XXXXX Unicity problem
 fi
 
+
+# -------------- output RINEX files --------------------------------------------------------
 # case A: output **directory** specified => archiving rinex with proper names (obs and nav)
 if [ -d $outdir ]; then
 	# gets the station code from the filename
@@ -230,6 +237,7 @@ if [ -d $outdir ]; then
 		fi
 		cp -f $tmpnav ${rinex}.${yy}n
 	fi
+
 # case B: output **file** specified => write the rinex using given filename
 else
 	if [ ! -z $VERBOSE ]; then
