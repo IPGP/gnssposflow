@@ -34,8 +34,9 @@
 # ** 2026-04-23 Pierre Sakic
 # - Add the option to use ConvertoCPP instead of teqc for RINEX3 files
 
-### comment the variable to disable the verbose mode
-#VERBOSE=1
+### comment the variable to disable the verbose mode 
+# (do not switch to 0, the test is based on variable initialization...)
+VERBOSE=1
 
 # Check if ConvertoCPP is available and set the flag accordingly
 if command -v ConvertoCPP &> /dev/null; then
@@ -243,6 +244,9 @@ fi
 # -------------- output RINEX files --------------------------------------------------------
 # case A: output **directory** specified => archiving rinex with proper names (obs and nav)
 if [ -d $outdir ]; then
+	if [ ! -z $VERBOSE ]; then
+		echo "  case A: output **directory** specified"
+	fi
 	# gets the station code from the filename
 	for f in $rawfiles; do
 		#echo $f
@@ -264,8 +268,10 @@ if [ -d $outdir ]; then
 	fi
 
 # case B: output **file** specified => write the rinex using given filename
+# most usual mode, used by gnss_run_gipsyx
 else
 	if [ ! -z $VERBOSE ]; then
+		echo "  case B: output **file** specified"
 		echo "   cp -f $tmprnx $outdir"
 	fi
 	cp -f $tmprnx $outdir
