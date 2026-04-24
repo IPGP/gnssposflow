@@ -25,18 +25,18 @@
 # Updated: 2023-08-21
 #
 # **** Updates
+# ** 2026-04-23 Pierre Sakic
+# - Add the option to use ConvertoCPP instead of teqc for RINEX3 files
 # ** 2023-08-07 Pierre Sakic 
 # - Handle the RINEX3 as it is
 #   (no downgrade to RNX2, but no modification of the header either)
 # ** 2024-05-05 Pierre Sakic
 # - Handle gzip compression for RINEX2 
 #   (NB: RINEX3 are always gzipped by design)
-# ** 2026-04-23 Pierre Sakic
-# - Add the option to use ConvertoCPP instead of teqc for RINEX3 files
 
 ### comment the variable VERBOSE to disable the verbose mode 
 # (do not switch to 0, the test is based on variable initialization...)
-VERBOSE=1
+# VERBOSE=1
 
 # Check if ConvertoCPP is available and set the flag accordingly
 if command -v ConvertoCPP &> /dev/null; then
