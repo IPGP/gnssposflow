@@ -232,9 +232,9 @@ if [ $skipteqc -eq 0 ]; then
         teqc $teqcfmt $teqcopt $obsfiles > $tmprnx
 elif [[ $USE_CONVERTO -eq 1 && $skipconverto -eq 0 ]]; then
         if [ ! -z $VERBOSE ]; then
-                echo "ConvertoCPP $teqcopt -i $obsfiles -o $tmprnx -cat"
+                echo "ConvertoCPP $teqcopt -cat -i $obsfiles -o $tmprnx"
         fi
-		ConvertoCPP $teqcopt -i $obsfiles -o $tmprnx -cat
+		ConvertoCPP $teqcopt -cat -i $obsfiles -o $tmprnx
 else    
         obsfiles_1st=`echo $obsfiles | head -1 | awk '{print $1}'`
         if [ ! -z $VERBOSE ]; then
@@ -247,7 +247,8 @@ else
 fi
 
 # -------------- output RINEX files --------------------------------------------------------
-# case A: output **directory** specified => archiving rinex with proper names (obs and nav)
+# case A: output **directory** specified 
+#         => archiving RINEX with proper 8.3 short names (obs and nav)
 if [ -d $outdir ]; then
 	if [ ! -z $VERBOSE ]; then
 		echo "  case A: output **directory** specified"
@@ -255,9 +256,9 @@ if [ -d $outdir ]; then
 	# gets the station code from the filename
 	for f in $rawfiles; do
 		#echo $f
-		mdbfile=$(basename $f)
-		code=${mdbfile:0:4}
-		rinex=$outdir/${mdbfile:0:8}
+		filebn=$(basename $f)
+		code=${filebn:0:4}
+		rinex=$outdir/${filebn:0:8}
 	done
 	code=$(echo $code | tr '[:lower:]' '[:upper:]')
 	starttime=$(teqc +meta $tmprnx | grep "start date" | sed -e 's/.*: //' | sed -e 's/[ \t]*//')
@@ -272,7 +273,8 @@ if [ -d $outdir ]; then
 		cp -f $tmpnav ${rinex}.${yy}n
 	fi
 
-# case B: output **file** specified => write the rinex using given filename
+# case B: output **file** specified 
+#         => write the RINEX using given filename
 # most usual mode, used by gnss_run_gipsyx
 else
 	if [ ! -z $VERBOSE ]; then
