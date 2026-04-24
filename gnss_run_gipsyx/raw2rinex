@@ -226,7 +226,7 @@ if [ $skipteqc -eq 0 ]; then
                 echo "teqc $teqcfmt $teqcopt $obsfiles > $tmprnx"
         fi
         teqc $teqcfmt $teqcopt $obsfiles > $tmprnx
-elif [ $USE_CONVERTO -eq 1 && $skipconverto -eq 0 ]; then
+elif [[ $USE_CONVERTO -eq 1 && $skipconverto -eq 0 ]]; then
         if [ ! -z $VERBOSE ]; then
                 echo "ConvertoCPP $teqcopt -i $obsfiles -o $tmprnx -cat"
         fi
