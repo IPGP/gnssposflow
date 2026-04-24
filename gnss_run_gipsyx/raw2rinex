@@ -53,6 +53,7 @@ fi
 
 if [ $# -lt 2 ]; then
 	echo "raw2rinex input output [teqc options]"
+	echo 'NB1: multiple inputs: "input1 input2 ... inputN" (between double quotes)'
 	exit 0;
 fi
 
@@ -181,7 +182,8 @@ if [ ! -z "$rf" ]; then
 	skipconverto=0
 fi
 
-# try Leica mdb...
+# ------ RAW Manufacturer files ------
+# --- try Leica mdb...
 rf=$(find $tmpdir -name "*.m??" | sort )
 if [ ! -z "$rf" ]; then
 	echo "   Found some Leica files in $rawdir: proceeding..."
@@ -193,7 +195,7 @@ if [ ! -z "$rf" ]; then
 	skipconverto=1
 fi
 
-# try Trimble T02...
+# --- try Trimble T02...
 rf=$(find $tmpdir -name "*.T02" | sort )
 if [ ! -z "$rf" ]; then
 	echo "   Found some Trimble files in $rawdir: proceeding..."
@@ -217,10 +219,11 @@ fi
 tmprnx=$tmpdir/rinex
 tmpnav=$tmpdir/nav
 
-# -------------- Apply teqc or ConvertoCPP --------------------------------------------------------
-# Convert Raw To RINEX(2) If Necessary
-# Or Splice RINEX2 Files To A Single RINEX2 File 
-# Or take the 1st RINEX3 (Skip Teqc)
+# -------------- Apply teqc or Converto --------------------------------------------------------
+# Perform an (actual) Raw-To-RINEX(2) conversion If Necessary (with teqc)
+# Or Splice RINEX2 Files To A Single RINEX2 File (with teqc)
+# Or Splice RINEX3 Files To A Single RINEX3 File (with Converto)
+# Or take the 1st RINEX3 (Skip Teqc & Converto
 
 if [ $skipteqc -eq 0 ]; then
         if [ ! -z $VERBOSE ]; then
@@ -233,13 +236,14 @@ elif [[ $USE_CONVERTO -eq 1 && $skipconverto -eq 0 ]]; then
         fi
 		ConvertoCPP $teqcopt -i $obsfiles -o $tmprnx -cat
 else    
-        if [ ! -z $VERBOSE ]; then
-                echo "   teqc concatenation/modding skipped (RNX3). Header's ant/rec assumed correct!"
-        fi
         obsfiles_1st=`echo $obsfiles | head -1`
-        cp $obsfiles_1st $tmprnx #### XXXXX Unicity problem
+        if [ ! -z $VERBOSE ]; then
+                echo "   RNX3: teqc splicing/modding skipped & no Converto avaiable. Header's ant/rec assumed correct!"
+				echo "   1st file only is kept: $obsfiles_1st"
+				echo "   cp -f $obsfiles $tmprnx"		
+        fi
+        cp $obsfiles_1st $tmprnx
 fi
-
 
 # -------------- output RINEX files --------------------------------------------------------
 # case A: output **directory** specified => archiving rinex with proper names (obs and nav)
