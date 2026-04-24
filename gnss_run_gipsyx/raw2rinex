@@ -236,7 +236,7 @@ elif [[ $USE_CONVERTO -eq 1 && $skipconverto -eq 0 ]]; then
         fi
 		ConvertoCPP $teqcopt -i $obsfiles -o $tmprnx -cat
 else    
-        obsfiles_1st=`echo $obsfiles | head -1`
+        obsfiles_1st=`echo $obsfiles | head -1 | awk '{print $1}'`
         if [ ! -z $VERBOSE ]; then
                 echo "   RNX3: teqc splicing/modding skipped & no Converto avaiable. Header's ant/rec assumed correct!"
 				echo "   1st file only is kept: $obsfiles_1st"
