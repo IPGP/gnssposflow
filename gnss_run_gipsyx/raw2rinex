@@ -31,10 +31,14 @@
 # ** 2024-05-05 Pierre Sakic
 # - Handle gzip compression for RINEX2 
 #   (NB: RINEX3 are always gzipped by design)
-#
+# ** 2026-04-23 Pierre Sakic
+# - Add the option to use ConvertoCPP instead of teqc for RINEX3 files
 
 ### comment the variable to disable the verbose mode
 #VERBOSE=1
+
+USE_CONVERTO=0
+
 
 if [ $# -lt 2 ]; then
 	echo "raw2rinex input output [teqc options]"
@@ -108,7 +112,8 @@ if [ ! -z "$rf" ]; then
 	obsfiles=$(find $tmpdir -iname "*.??o" | sort )
 	navfiles=$(find $tmpdir -iname "*.??n" | sort )
 	teqcfmt=""
-        skipteqc=0
+    skipteqc=0
+	skipconverto=1
 fi
 
 # --- try RINEX2 Hatanaka files
@@ -127,7 +132,8 @@ if [ ! -z "$rf" ]; then
 	obsfiles=$rawfiles
 	navfiles=""
 	teqcfmt=""
-        skipteqc=0
+    skipteqc=0
+	skipconverto=1
 fi
 
 # ------ RINEX3 ------
@@ -139,7 +145,8 @@ if [ ! -z "$rf" ]; then
 	obsfiles=$rf
 	#navfiles=$(find $tmpdir -iname "*.??n" | sort )
 	teqcfmt=""
-        skipteqc=1
+    skipteqc=1
+	skipconverto=0
 fi
 
 # --- try RINEX3 Hatanaka files
@@ -159,7 +166,8 @@ if [ ! -z "$rf" ]; then
 	obsfiles=$(find $tmpdir -iname "*.rnx" | sort )
 	navfiles=""
 	teqcfmt=""
-        skipteqc=1
+    skipteqc=1
+	skipconverto=0
 fi
 
 # try Leica mdb...
@@ -170,7 +178,8 @@ if [ ! -z "$rf" ]; then
 	obsfiles=$(find $tmpdir -iname "*.m??" | sort )
 	navfiles=$rawfiles
 	teqcfmt="-lei mdb"
-        skipteqc=0
+    skipteqc=0
+	skipconverto=1
 fi
 
 # try Trimble T02...
@@ -185,7 +194,8 @@ if [ ! -z "$rf" ]; then
 	obsfiles=$rawfiles
 	navfiles=$rawfiles
 	teqcfmt="-tr d"
-        skipteqc=0
+    skipteqc=0
+	skipconverto=1
 fi
 
 if [ -z "$rawfiles" ]; then
@@ -196,7 +206,7 @@ fi
 tmprnx=$tmpdir/rinex
 tmpnav=$tmpdir/nav
 
-# -------------- Apply teqc --------------------------------------------------------
+# -------------- Apply teqc or ConvertoCPP --------------------------------------------------------
 # Convert Raw To RINEX(2) If Necessary
 # Or Splice RINEX2 Files To A Single RINEX2 File 
 # Or take the 1st RINEX3 (Skip Teqc)
@@ -206,6 +216,11 @@ if [ $skipteqc -eq 0 ]; then
                 echo "teqc $teqcfmt $teqcopt $obsfiles > $tmprnx"
         fi
         teqc $teqcfmt $teqcopt $obsfiles > $tmprnx
+elif [ $USE_CONVERTO -eq 1 && $skipconverto -eq 0 ]; then
+        if [ ! -z $VERBOSE ]; then
+                echo "ConvertoCPP $teqcopt -i $obsfiles -o $tmprnx -cat"
+        fi
+		ConvertoCPP $teqcopt -i $obsfiles -o $tmprnx -cat
 else    
         if [ ! -z $VERBOSE ]; then
                 echo "   teqc concatenation/modding skipped (RNX3). Header's ant/rec assumed correct!"
