@@ -34,7 +34,7 @@
 # ** 2026-04-23 Pierre Sakic
 # - Add the option to use ConvertoCPP instead of teqc for RINEX3 files
 
-### comment the variable to disable the verbose mode 
+### comment the variable VERBOSE to disable the verbose mode 
 # (do not switch to 0, the test is based on variable initialization...)
 VERBOSE=1
 
@@ -46,7 +46,7 @@ if command -v ConvertoCPP &> /dev/null; then
 	USE_CONVERTO=1
 else
 	if [ ! -z $VERBOSE ]; then
-		echo "WARN: ConvertoCPP not found, RINEX3 files won't be spliced"
+		echo "WARN: ConvertoCPP not found, RINEX3 files can't be spliced"
 	fi
 	USE_CONVERTO=0
 fi
@@ -238,8 +238,9 @@ elif [[ $USE_CONVERTO -eq 1 && $skipconverto -eq 0 ]]; then
 else    
         obsfiles_1st=`echo $obsfiles | head -1 | awk '{print $1}'`
         if [ ! -z $VERBOSE ]; then
-                echo "   RNX3: teqc splicing/modding skipped & no Converto avaiable. Header's ant/rec assumed correct!"
-				echo "   1st file only is kept: $obsfiles_1st"
+                echo "   RNX3: no teqc possible & no Converto avaiable."
+				echo "     > splicing/modding skipped, assuming header's ant/rec are correct!"
+				echo "     > 1st file only is kept: $obsfiles_1st"
 				echo "   cp -f $obsfiles $tmprnx"		
         fi
         cp $obsfiles_1st $tmprnx
