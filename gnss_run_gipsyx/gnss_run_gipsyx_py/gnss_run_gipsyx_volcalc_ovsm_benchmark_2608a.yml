@@ -1,0 +1,130 @@
+###############################################################################
+# Template configuration file for script gnss_run_gipsyx.py
+# Please copy, rename and edit it for each network.
+#
+# Created: 2020-12-20
+# Updated: 2023-04-24
+# Converted from gnss_run_gipsyx_volcalc_ovsm_benchmark_2608a.rc
+
+# GNSS home directory
+gnsshome: /home/ovsgnss
+# Main temporary directory. The value is taken from GIPSYX_TMPMAINDIR.
+tmpdirmain: "$GIPSYX_TMPMAINDIR"
+
+# Prepares GIPSYX processing.
+# This is GipsyX's own environment configuration file.
+gipsyx_rc: /opt/softs_gnss/gipsyx/GipsyX/rc_GipsyX.sh
+# Additional directories added to PATH by the original .rc file.
+path_prefix:
+  - /data/data2/GNSS/anaconda3/bin
+  - /home/ovsgnss/bin
+
+# Grid of a local WebObs that contains the station list (nodes).
+# GRID=PROC.GIPSYX can be used instead of an explicit station list.
+# The following list is used because GRID is empty.
+nodes:
+  - AJB0
+  - BIM0
+  - CHN0
+  - FSDC
+  - HABL
+  - HABO
+  - ILAM
+  - LAM0
+  - MLM0
+  - MFO0
+  - MPL0
+  - MPOM
+  - SAM0
+  - SCH2
+  - CALB
+  - CLE0
+  - DM20
+  - FSD0
+  - GLIC
+  - GRIV
+  - LDV0
+  - LDV1
+  - LGA0
+  - LPR0
+  - LRIZ
+  - MA10
+  - MMA0
+  - PBO0
+  - PEC0
+  - PRIL
+  - PTB0
+  - RAP0
+  - RBL0
+  - RRA0
+  - SCH0
+  - TRF1
+
+grid: null
+noderoot: null
+
+# Sitelog directory.
+sitelog: /home/ovsgnss/051_METADATA_GNSS/010_sitelogs_from_m3g/OVSM
+station_info: null
+
+# Base directory to store local orbits (optional).
+orbitsdir: /scratch/calcgnss/prods_gnss_jpl
+# Base directory that contains the raw data.
+from: /vol/ovsm/ACQUI/Deformations/GPS/data
+# Directory structure of the raw data (will be evaluated using variable
+# substitution). Valid variables are: $FID, $sta (lowercase FID), $yyyy, $yy,
+# $mm, $dd and $doy.
+fmt: '$FROM/$yyyy/$doy/rinex/{$FID,$sta}*$doy*{crx,d\\.}*'
+# Base directory for output results.
+dest: /home/ovsgnss/080_RESULTS_GIPSYX/gipsyx_results_playgrd/OVSM_benchmark_2608/FIN
+
+# Gd2e.py options.
+gipsyoptions: '-runType PPP'
+# Teqc options.
+teqcoptions: "+quiet -O.ag 'IPGP' -O.op 'WO' -C2 -O.-obs C2 -O.-obs C5 -O.dec 30s -max_rx_SVs 40"
+
+# Download_orbit options.
+download_orbit: true
+download_options: '-r 3000'
+
+# Realtime processing (put true if wanted).
+realtime: false
+# Data delay for realtime processing.
+data_delay: '5 min'
+debug: false
+# Full log record. Temporary folders are stored in a .fullog.7z file.
+fullog: true
+
+# Advanced geodetic modes
+# Use fiducial (regular) or non-fiducial (NF) orbits.
+# The nforb option adds '-prodTypeGNSS nf -gdCov' to GIPSYOPTIONS
+# and performs the post-processing re-alignment.
+# Leave nforb false if you are not sure of what you are doing.
+# *** Detailed Note:
+# JPL's Fiducial orbits are directly aligned to ITRF.
+# But the usage of Non-fiducial orbits is recommended by
+# JPL and the geodetic community.
+# Coordinates computed with non-fiducial orbits require
+# a re-alignment to the ITRF with external Helmert parameters.
+nforb: false
+# Apply Center-of-Mass > Center-of-Figure transformation.
+# The cm2cf option adds '-gdCov' to GIPSYOPTIONS
+# and performs a post-processing CM > CF transformation.
+# Activating cm2cf is recommended, but stays OFF per default.
+cm2cf: true
+# *** Detailed Note:
+# Since August 2024, JPL provides its orbits in
+# IGS20 (~ITRF2020) with respect to Earth's Center of Mass (CM).
+# For volcanological studies, Earth's Center of Figure (CF)
+# is a better origin point (no seasonal signal visible).
+# Thus, a CM > CF transformation is needed.
+
+# ANTEX file for the -antexFile gd2e.py option (optional)
+antex: null
+
+# Display some RINEX header fields in case of error.
+error_regex_rinex: 'REC #|ANT #|# / TYPES OF OBSERV|MARKER NAME|APPROX POSITION XYZ'
+# Save debug.tree file (contains 'TropoDry').
+save_debug_tree: false
+# Add troposphere results in .tdp files (.Trop.*).
+trop_tdp: false
