@@ -39,7 +39,25 @@ def load_yaml_config(path):
         sys.exit(1)
     with open(path, "r") as f:
         config = yaml.safe_load(f) or {}
-    return config
+    return expand_environment_variables(config)
+
+
+def expand_environment_variables(value):
+    """Expands ``$VAR`` and ``${VAR}`` in YAML strings recursively.
+
+    Unknown variables are preserved, which allows runtime format variables
+    such as ``$FROM`` and ``$FID`` to be expanded later by ``expand_fmt``.
+    """
+    if isinstance(value, str):
+        return os.path.expandvars(value)
+    if isinstance(value, list):
+        return [expand_environment_variables(item) for item in value]
+    if isinstance(value, dict):
+        return {
+            expand_environment_variables(key): expand_environment_variables(item)
+            for key, item in value.items()
+        }
+    return value
 
 
 def run_cmd(cmd, log_file=None, verbose=False, check=False, cwd=None, env=None):
