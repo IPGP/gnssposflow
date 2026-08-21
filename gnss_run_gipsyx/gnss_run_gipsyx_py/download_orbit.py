@@ -12,6 +12,7 @@ and the external `wget` binary.
 Authors: Edgar Lenhof, Francois Beauducel, Pierre Sakic (original bash)
 """
 
+import argparse
 import os
 import sys
 import time
@@ -95,57 +96,42 @@ def download_orbit(days, dest, orbits=None, start_dates=None, delete_older_than=
                 print(f"   Orbit {orbit} for {dd}-{month}-{year} is locally available.")
 
 
-def main(argv):
-    if len(argv) < 2:
-        print("     Syntax: download_orbit DAYS DEST [options]")
-        print("Description: downloads best available orbit for chosen dates from the")
-        print("             JPL secured web server (see ")
-        print("             https://sideshow.jpl.nasa.gov/pub/JPL_GNSS_Products)")
-        print("  Arguments:")
-        print("        DAYS = number of days to process (from start day)")
-        print("        DEST = root directory where orbits shall be saved")
-        print("    Options:")
-        print("        -o ORBIT = type of orbit (Ultra, Rapid, Final, or Rapid_GE)")
-        print("        -d STARTDAY = days to start retrieving (YYYY/mm/dd)")
-        print("        -r DAYS = remove orbit files older than DAYS days")
-        print("        -v = verbose mode")
-        print("")
-        print("Needs the companion file download_orbit.yml")
-        return 0
+def build_arg_parser():
+    parser = argparse.ArgumentParser(
+        prog="download_orbit",
+        description=(
+            "Downloads best available orbit for chosen dates from the JPL secured "
+            "web server (see https://sideshow.jpl.nasa.gov/pub/JPL_GNSS_Products)."
+        ),
+        epilog="Needs the companion file download_orbit.yml",
+    )
+    parser.add_argument("days", type=int, help="number of days to process (from start day)")
+    parser.add_argument("dest", help="root directory where orbits shall be saved")
+    parser.add_argument("-o", dest="orbit", choices=VALID_ORBITS,
+                         help="type of orbit (Ultra, Rapid, Final, or Rapid_GE)")
+    parser.add_argument("-d", dest="start_days", metavar="STARTDAY[,STARTDAY...]",
+                         help="days to start retrieving (YYYY/mm/dd), comma separated")
+    parser.add_argument("-r", dest="remove_older_than", type=int, metavar="DAYS",
+                         help="remove orbit files older than DAYS days")
+    parser.add_argument("-v", dest="verbose", action="store_true", help="verbose mode")
+    return parser
 
-    days = int(argv[0])
-    dest = argv[1]
+
+def main(argv):
+    parser = build_arg_parser()
+    if not argv:
+        parser.print_help()
+        return 0
+    args = parser.parse_args(argv)
 
     progdir = os.path.dirname(os.path.abspath(__file__))
     extensions_file = os.path.join(progdir, "download_orbit.yml")
 
-    orbits = list(DEFAULT_ORBITS)
-    start_dates = None
-    delete_older_than = None
-    verbose = False
+    orbits = [args.orbit] if args.orbit else list(DEFAULT_ORBITS)
+    start_dates = [parse_ymd(d) for d in args.start_days.split(",")] if args.start_days else None
 
-    i = 2
-    while i < len(argv):
-        opt = argv[i]
-        if opt == "-d":
-            i += 1
-            start_dates = [parse_ymd(d) for d in argv[i].split(",")]
-        elif opt == "-o":
-            i += 1
-            orbit = argv[i]
-            if orbit not in VALID_ORBITS:
-                print("Error: Please enter orbit as Ultra, Rapid, Final, or Rapid_GE")
-                return 1
-            orbits = [orbit]
-        elif opt == "-r":
-            i += 1
-            delete_older_than = int(argv[i])
-        elif opt == "-v":
-            verbose = True
-        i += 1
-
-    download_orbit(days, dest, orbits=orbits, start_dates=start_dates,
-                    delete_older_than=delete_older_than, verbose=verbose,
+    download_orbit(args.days, args.dest, orbits=orbits, start_dates=start_dates,
+                    delete_older_than=args.remove_older_than, verbose=args.verbose,
                     extensions_file=extensions_file)
     return 0
 

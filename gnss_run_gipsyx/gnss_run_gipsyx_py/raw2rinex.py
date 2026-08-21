@@ -12,6 +12,7 @@ Dependencies (external binaries, must be in $PATH):
 Author: F. Beauducel / DOMERAPI <beauducel@ipgp.fr> (original bash)
 """
 
+import argparse
 import fnmatch
 import glob
 import os
@@ -233,18 +234,30 @@ def raw2rinex(rawdir, outdir, teqcopt="", verbose=False, tmpdirmain=None):
             shutil.rmtree(tmpdir, ignore_errors=True)
 
 
-def main(argv):
-    if len(argv) < 2:
-        print("raw2rinex input output [teqc options]")
-        print('NB1: multiple inputs: "input1 input2 ... inputN" (between double quotes)')
-        return 0
+def build_arg_parser():
+    parser = argparse.ArgumentParser(
+        prog="raw2rinex",
+        description="GNSS raw data files convertion to daily RINEX 2.11.",
+        epilog='NB1: multiple inputs: "input1 input2 ... inputN" (between double quotes)',
+    )
+    parser.add_argument("input", help="directory or filename of raw data (Leica, Trimble, Rinex), compressed or not")
+    parser.add_argument("output", help="output directory (must exist) or output rinex filename")
+    parser.add_argument("teqcoptions", nargs=argparse.REMAINDER,
+                         help='any options to add to teqc (example: -O.dec 30 -O.rt "receiver" -O.at "antenna")')
+    return parser
 
-    rawdir = argv[0]
-    outdir = argv[1]
-    teqcopt = " ".join(argv[2:])
+
+def main(argv):
+    parser = build_arg_parser()
+    if not argv:
+        parser.print_help()
+        return 0
+    args = parser.parse_args(argv)
+
+    teqcopt = " ".join(args.teqcoptions)
     verbose = bool(os.environ.get("VERBOSE"))
 
-    return raw2rinex(rawdir, outdir, teqcopt=teqcopt, verbose=verbose)
+    return raw2rinex(args.input, args.output, teqcopt=teqcopt, verbose=verbose)
 
 
 if __name__ == "__main__":

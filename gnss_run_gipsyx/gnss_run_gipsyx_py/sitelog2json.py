@@ -9,6 +9,7 @@ Reads a sitelog file (or directory of sitelogs) and returns site metadata
 Author: F. Beauducel <beauducel@ipgp.fr> (original bash)
 """
 
+import argparse
 import glob
 import json
 import os
@@ -144,33 +145,41 @@ def sitelog2json(file_arg, site_arg, date_arg=None):
     return result
 
 
+def build_arg_parser():
+    parser = argparse.ArgumentParser(
+        prog="sitelog2json",
+        description="Reads sitelog file(s) and returns data as JSON.",
+        epilog=(
+            "Outputs: JSON string with following fields:\n"
+            "  mo = monument site code (4 characters)\n"
+            "  sn = site name\n"
+            "  px = approximate position (WGS84xyz,m)\n"
+            "  rt = receiver type\n"
+            "  rv = receiver version\n"
+            "  rn = receiver S/N\n"
+            "  at = antenna type\n"
+            "  an = antenna S/N\n"
+            "  pe = antenna Marker->ARP (hEN,m)\n"
+            "  op = operator\n"
+            "  ag = agency"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("file", help="path or filename(s) of sitelog(s)")
+    parser.add_argument("site", help="site code (4 or 9 characters)")
+    parser.add_argument("date", nargs="?", default=None,
+                         help="date as YYYY-MM-DD[Thh:mm] (default is current time)")
+    return parser
+
+
 def main(argv):
-    if len(argv) < 2:
-        print("      Syntax: sitelog2json FILE SITE [DATE]")
-        print(" Description: reads sitelog file(s) and returns data as JSON")
-        print("   Arguments: FILE = path or filename(s) of sitelog(s)")
-        print("              SITE = site code (4 or 9 characters)")
-        print("              DATE = date as YYYY-MM-DD[Thh:mm] (default is current time)")
-        print("     Outputs: JSON string with following fields:")
-        print("              mo = monument site code (4 characters)")
-        print("              sn = site name")
-        print("              px = approximate position (WGS84xyz,m)")
-        print("              rt = receiver type")
-        print("              rv = receiver version")
-        print("              rn = receiver S/N")
-        print("              at = antenna type")
-        print("              an = antenna S/N")
-        print("              pe = antenna Marker->ARP (hEN,m)")
-        print("              op = operator")
-        print("              ag = agency")
-        print("")
+    parser = build_arg_parser()
+    if not argv:
+        parser.print_help()
         return 0
+    args = parser.parse_args(argv)
 
-    file_arg = argv[0]
-    site_arg = argv[1]
-    date_arg = argv[2] if len(argv) > 2 else None
-
-    result = sitelog2json(file_arg, site_arg, date_arg)
+    result = sitelog2json(args.file, args.site, args.date)
     if result is not None:
         print(json.dumps(result))
     return 0
@@ -178,3 +187,4 @@ def main(argv):
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+

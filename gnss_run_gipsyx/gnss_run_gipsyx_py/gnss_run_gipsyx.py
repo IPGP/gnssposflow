@@ -18,6 +18,7 @@ Authors: Francois Beauducel, Edgar Lenhof, Patrice Boissier, Pierre Sakic
 (original bash script)
 """
 
+import argparse
 import glob
 import gzip
 import os
@@ -170,40 +171,71 @@ def build_teqc_header_opts(header):
 # CLI options
 # --------------------------------------------------------------------------
 
-def parse_options(argv):
-    opts = dict(orbits=["flinn", "ql", "ultra"], force=False, debug=False, fullog=False,
-                stations=None, start_dates=None, lock=False)
-    i = 0
-    while i < len(argv):
-        arg = argv[i]
-        if arg == "-final":
-            opts["orbits"] = ["flinn"]
-            print("Will use only final orbit")
-        elif arg == "-rapid":
-            opts["orbits"] = ["ql"]
-            print("Will use only rapid orbit")
-        elif arg == "-ultra":
-            opts["orbits"] = ["ultra"]
-            print("Will use only ultra orbit")
-        elif arg == "-force":
-            opts["force"] = True
-            print("Force computation despites final orbit results already exist")
-        elif arg == "-debug":
-            opts["debug"] = True
-            os.environ["VERBOSE"] = "1"
-            print("Debug mode: temporary folders will NOT be deleted!")
-        elif arg == "-fullog":
-            opts["fullog"] = True
-            print("Full log record: temporary folders will be stored in zip files")
-        elif arg == "-s":
-            i += 1
-            opts["stations"] = argv[i].split()
-        elif arg == "-d":
-            i += 1
-            opts["start_dates"] = [parse_ymd(d) for d in argv[i].split(",")]
-        elif arg == "-lock":
-            opts["lock"] = True
-        i += 1
+def build_arg_parser():
+    parser = argparse.ArgumentParser(
+        prog="gnss_run_gipsyx",
+        description="Runs the automatic GNSS process from raw files to position solution.",
+        epilog=(
+            'Example: gnss_run_gipsyx CONF 1 -d 2017/03/17,2018/08/05\n'
+            'will compute 2017/03/17, 2017/03/16, 2018/08/05 and 2018/08/04.'
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("conf", help="configuration filename (YAML, see gnss_run_gipsyx_template.yml)")
+    parser.add_argument("days", type=int, help="number of days to process (from today)")
+    parser.add_argument("-s", dest="stations", metavar='"STA1 STA2..."',
+                         help="station code or station list, default is all nodes defined in CONF nodes:")
+    parser.add_argument("-d", dest="start_days", metavar="yyyy/mm/dd[,yyyy/mm/dd]",
+                         help="choose day(s) to start process; DAYS still applies to previous days")
+
+    orbit_group = parser.add_mutually_exclusive_group()
+    orbit_group.add_argument("-final", dest="orbit_choice", action="store_const", const="final",
+                              help="use only final orbit")
+    orbit_group.add_argument("-rapid", dest="orbit_choice", action="store_const", const="rapid",
+                              help="use only rapid orbit")
+    orbit_group.add_argument("-ultra", dest="orbit_choice", action="store_const", const="ultra",
+                              help="use only ultra orbit")
+
+    parser.add_argument("-force", dest="force", action="store_true",
+                         help="forces the process despite existence of final results")
+    parser.add_argument("-lock", dest="lock", action="store_true",
+                         help="creates a lock file to prevent multiple process of gnss_run_gipsyx")
+    parser.add_argument("-debug", dest="debug", action="store_true",
+                         help="verbose mode & temporary folders will not be deleted")
+    parser.add_argument("-fullog", dest="fullog", action="store_true",
+                         help="full log record, temporary folders stored in a .fullog.7z file (7-zip needed)")
+    return parser
+
+
+ORBIT_CHOICE_TO_ORBITS = {"final": ["flinn"], "rapid": ["ql"], "ultra": ["ultra"]}
+ORBIT_CHOICE_MESSAGE = {
+    "final": "Will use only final orbit",
+    "rapid": "Will use only rapid orbit",
+    "ultra": "Will use only ultra orbit",
+}
+
+
+def parse_options(args):
+    """Builds the opts dict used throughout the script from a parsed
+    argparse.Namespace."""
+    opts = dict(orbits=["flinn", "ql", "ultra"], force=args.force, debug=args.debug,
+                fullog=args.fullog, stations=None, start_dates=None, lock=args.lock)
+
+    if args.orbit_choice:
+        opts["orbits"] = ORBIT_CHOICE_TO_ORBITS[args.orbit_choice]
+        print(ORBIT_CHOICE_MESSAGE[args.orbit_choice])
+    if args.force:
+        print("Force computation despites final orbit results already exist")
+    if args.debug:
+        os.environ["VERBOSE"] = "1"
+        print("Debug mode: temporary folders will NOT be deleted!")
+    if args.fullog:
+        print("Full log record: temporary folders will be stored in zip files")
+    if args.stations:
+        opts["stations"] = args.stations.split()
+    if args.start_days:
+        opts["start_dates"] = [parse_ymd(d) for d in args.start_days.split(",")]
+
     return opts
 
 
@@ -556,54 +588,25 @@ def gnss_run_gipsyx(config, days, opts):
     return 0
 
 
-def print_help():
-    print("      Syntax: gnss_run_gipsyx CONF DAYS [options]")
-    print(" Description: runs the automatic GNSS process from raw files to position solution")
-    print("   Arguments:")
-    print("       CONF = configuration filename (YAML, see gnss_run_gipsyx_template.yml)")
-    print("       DAYS = number of days to process (from today)")
-    print("     Options:")
-    print('       -s "STA1 STA2..."')
-    print("        station code or station list with double quotes")
-    print("           default is all nodes defined in CONF nodes:")
-    print('       -d "yyyy/mm/dd[,yyyy/mm/dd]"')
-    print("        choose day(s) to start process; the DAYS argument *must* still be used")
-    print("        to process previous days from the selected ones, for instance:")
-    print("        gnss_run_gipsyx CONF 1 -d 2017/03/17,2018/08/05")
-    print("        will compute  2017/03/17, 2017/03/16, 2018/08/05 and 2018/08/04")
-    print("       -final, -rapid, -ultra")
-    print("        use only final, rapid or ultra orbit")
-    print("       -force")
-    print("        forces the process despite existence of final results")
-    print("       -lock")
-    print("        creates a lock file to prevent multiple process of gnss_run_gipsyx")
-    print("       -debug")
-    print("        verbose mode & temporary folders will not be deleted")
-    print("       -fullog")
-    print("        Full log record. Temporary folders are stored in a .fullog.7z file (7-zip needed)")
-    print("")
-
-
 def main(argv):
-    if len(argv) < 2:
-        print_help()
+    parser = build_arg_parser()
+    if not argv:
+        parser.print_help()
         return 0
+    args = parser.parse_args(argv)
 
     if is_already_running():
         print("already running")
         return 0
 
-    conf_path = argv[0]
-    days = int(argv[1])
-    opts = parse_options(argv[2:])
-
-    config = load_yaml_config(conf_path)
+    opts = parse_options(args)
+    config = load_yaml_config(args.conf)
 
     if opts["lock"]:
         write_lockfile()
 
     try:
-        return gnss_run_gipsyx(config, days, opts)
+        return gnss_run_gipsyx(config, args.days, opts)
     finally:
         if opts["lock"]:
             remove_lockfile()

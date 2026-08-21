@@ -9,6 +9,7 @@ the matching receiver/antenna record as JSON.
 Author: F. Beauducel <beauducel@ipgp.fr> (original bash)
 """
 
+import argparse
 import json
 import sys
 from datetime import datetime, timezone
@@ -67,21 +68,26 @@ def stationinfo2json(file_path, site, date_str=None):
     return results
 
 
+def build_arg_parser():
+    parser = argparse.ArgumentParser(
+        prog="stationinfo2json",
+        description="Reads station.info file and returns data as JSON.",
+    )
+    parser.add_argument("file", help="filename of station.info")
+    parser.add_argument("site", help="site code")
+    parser.add_argument("date", nargs="?", default=None,
+                         help="date as YYYY-DDD [HH:MM:SS] (default is current time)")
+    return parser
+
+
 def main(argv):
-    if len(argv) < 2:
-        print("      Syntax: stationinfo2json FILE SITE [DATE]")
-        print(" Description: reads station.info file and returns data as JSON")
-        print("   Arguments: FILE = filename of station.info")
-        print("              SITE = site code")
-        print("              DATE = date as YYYY-DDD [HH:MM:SS] (default is current time)")
-        print("")
+    parser = build_arg_parser()
+    if not argv:
+        parser.print_help()
         return 0
+    args = parser.parse_args(argv)
 
-    file_path = argv[0]
-    site = argv[1]
-    date_str = argv[2] if len(argv) > 2 else None
-
-    for record in stationinfo2json(file_path, site, date_str):
+    for record in stationinfo2json(args.file, args.site, args.date):
         print(json.dumps(record))
     return 0
 

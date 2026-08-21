@@ -10,6 +10,7 @@ directory, a Gamit station.info file, or local WebObs node parameters.
 Author: Baptiste Camus (original bash)
 """
 
+import argparse
 import os
 import sys
 
@@ -182,58 +183,43 @@ def gnss_make_rinex(config, days, stations=None, start_dates=None, infosrc_overr
     print("*************************************")
 
 
+def build_arg_parser():
+    parser = argparse.ArgumentParser(
+        prog="gnss_make_rinex",
+        description="Generates GNSS rinex files from rawdata and some site information if needed.",
+    )
+    parser.add_argument("conf", help="configuration filename (YAML), e.g. gnss_make_rinex_template.yml")
+    parser.add_argument("days", type=int, help="number of days to process (from today)")
+    parser.add_argument("-s", dest="stations", metavar='"STA1 STA2..."',
+                         help="station code or station list, default is the list of nodes defined in CONF")
+    parser.add_argument("-d", dest="start_days", metavar="yyyy/mm/dd[,yyyy/mm/dd]",
+                         help="choose days to start process; DAYS can still be used to process previous days")
+    parser.add_argument("-i", dest="infosrc", choices=["GRID", "SITELOG", "STATION_INFO"],
+                         help="site information source to overwrite missing headers")
+    parser.add_argument("-debug", dest="debug", action="store_true", help="verbose mode")
+    return parser
+
+
 def main(argv):
-    if len(argv) < 2:
-        print("      Syntax: gnss_make_rinex CONF DAYS [options]")
-        print(" Description: genrate gnss rinex file from rawdata and some site information if needed")
-        print("   Arguments:")
-        print("       CONF = configuration filename (YAML), e.g. gnss_make_rinex_template.yml")
-        print("       DAYS = number of days to process (from today)")
-        print("     Options:")
-        print('        -s "STA1 STA2..."')
-        print("            station code or station list with double quotes")
-        print("            default is the list of nodes defined in CONF")
-        print('       -d "yyyy/mm/dd,yyyy/mm/dd"')
-        print("            choose days to start process; the DAYS argument can still be used to")
-        print("            process previous days from the selected ones")
-        print("       -i GRID/SITELOG/STATION_INFO")
-        print("            choose the site information source to overwrite missing headers")
-        print("       -debug")
-        print("            verbose mode")
-        print("")
+    parser = build_arg_parser()
+    if not argv:
+        parser.print_help()
         return 0
+    args = parser.parse_args(argv)
 
-    conf_path = argv[0]
-    days = int(argv[1])
+    config = load_yaml_config(args.conf)
 
-    config = load_yaml_config(conf_path)
+    if args.debug:
+        print("Debug mode : processing with verbose log")
+    if args.infosrc:
+        print(f"   Generating rinex with headers informations based on {args.infosrc} files")
 
-    stations = None
-    start_dates = None
-    infosrc_override = None
-    verbose = False
+    from gnss_common import parse_ymd
+    stations = args.stations.split() if args.stations else None
+    start_dates = [parse_ymd(d) for d in args.start_days.split(",")] if args.start_days else None
 
-    i = 2
-    while i < len(argv):
-        opt = argv[i]
-        if opt == "-debug":
-            verbose = True
-            print("Debug mode : processing with verbose log")
-        elif opt == "-d":
-            i += 1
-            from gnss_common import parse_ymd
-            start_dates = [parse_ymd(d) for d in argv[i].split(",")]
-        elif opt == "-i":
-            i += 1
-            infosrc_override = argv[i]
-            print(f"   Generating rinex with headers informations based on {infosrc_override} files")
-        elif opt == "-s":
-            i += 1
-            stations = argv[i].split()
-        i += 1
-
-    gnss_make_rinex(config, days, stations=stations, start_dates=start_dates,
-                     infosrc_override=infosrc_override, verbose=verbose)
+    gnss_make_rinex(config, args.days, stations=stations, start_dates=start_dates,
+                     infosrc_override=args.infosrc, verbose=args.debug)
     return 0
 
 
