@@ -40,6 +40,7 @@ def delete_old_orbits(dest, older_than_days, verbose=False):
                 continue
 
 
+
 def download_orbit(days, dest, orbits=None, start_dates=None, delete_older_than=None,
                     verbose=False, extensions_file=None):
     """Downloads orbit products for the given days/orbit types into dest."""

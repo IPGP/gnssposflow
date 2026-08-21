@@ -148,7 +148,7 @@ def select_conversion_inputs(tmpdir, verbose=False):
     return sel
 
 
-def convert_to_rinex(tmpdir, sel, teqcopt, verbose=True):
+def convert_to_rinex(tmpdir, sel, teqcopt, verbose=False):
     """Runs teqc or ConvertoCPP (or a plain copy) to produce the spliced
     RINEX file $tmpdir/rinex."""
     tmprnx = os.path.join(tmpdir, "rinex")
