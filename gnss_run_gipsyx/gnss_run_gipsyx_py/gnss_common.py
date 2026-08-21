@@ -60,7 +60,7 @@ def expand_environment_variables(value):
     return value
 
 
-def run_cmd(cmd, log_file=None, verbose=False, check=False, cwd=None, env=None):
+def run_cmd(cmd, log_file=None, verbose=True, check=False, cwd=None, env=None):
     """Runs a shell command string (equivalent of bash's eval "$cmd").
 
     If log_file is given, stdout/stderr are appended to it (like "> log 2>&1").
