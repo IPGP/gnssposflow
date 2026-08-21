@@ -70,18 +70,20 @@ def remove_lockfile(lockfile=LOCKFILE):
 # GipsyX command execution (through the sourced gipsyx_rc environment)
 # --------------------------------------------------------------------------
 
-def run_gipsyx_cmd(gipsyx_rc, cmd, log_file=None, debug=False):
+def run_gipsyx_cmd(gipsyx_rc, cmd, log_file=None, debug=False, cwd=None):
     """Runs a GipsyX command (gd2e.py, netApply.py...) inside a bash
     subshell that has sourced gipsyx_rc first (equivalent of the bash
     script itself having done `source rc_GipsyX.sh`)."""
     full_cmd = f'source "{gipsyx_rc}" > /dev/null 2>&1; {cmd}'
     if debug:
         print(f"   {cmd}")
-        return subprocess.run(["bash", "-c", full_cmd]).returncode
+        return subprocess.run(["bash", "-c", full_cmd], cwd=cwd).returncode
     if log_file:
         with open(log_file, "a") as lf:
-            return subprocess.run(["bash", "-c", full_cmd], stdout=lf, stderr=subprocess.STDOUT).returncode
-    return subprocess.run(["bash", "-c", full_cmd], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode
+            return subprocess.run(["bash", "-c", full_cmd], cwd=cwd,
+                                  stdout=lf, stderr=subprocess.STDOUT).returncode
+    return subprocess.run(["bash", "-c", full_cmd], cwd=cwd,
+                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode
 
 
 def gipsyx_env_var(gipsyx_rc, var_name):
@@ -305,7 +307,7 @@ def try_orbits(config, opts, fid, ymd, rinex, tmpdir, gipsyres, log_path, verbos
 
         cmd = f"gd2e.py -rnxFile {rinex} -GNSSproducts {orbit_opt} {gipsyoptions} {nforb_opts} {cm2cf_opts} {atx_opts}"
         print(f"   {cmd}")
-        rc = run_gipsyx_cmd(gipsyx_rc, cmd, log_file=log_path, debug=debug)
+        rc = run_gipsyx_cmd(gipsyx_rc, cmd, log_file=log_path, debug=debug, cwd=tmpdir)
 
         if rc != 0 or not (os.path.isfile(tdp) and os.path.getsize(tdp) > 0):
             print(f"   {cmd}")
@@ -326,7 +328,7 @@ def try_orbits(config, opts, fid, ymd, rinex, tmpdir, gipsyres, log_path, verbos
             shutil.copy(cov, cov + "_cm")
             goa_var = gipsyx_env_var(gipsyx_rc, "GOA_VAR")
             cmd_cm2cf = f"netApplyNonLinear.py {cov} -cmFile {goa_var}/sta_info/IGS20.cm -reverse"
-            run_gipsyx_cmd(gipsyx_rc, cmd_cm2cf, log_file=log_path, debug=debug)
+            run_gipsyx_cmd(gipsyx_rc, cmd_cm2cf, log_file=log_path, debug=debug, cwd=tmpdir)
             shutil.copy(cov, cov + "_cf")
             label += ".CF"
 
@@ -336,7 +338,7 @@ def try_orbits(config, opts, fid, ymd, rinex, tmpdir, gipsyres, log_path, verbos
             trsprm = os.path.join(orbitsdir, product, ymd.strftime("%Y"), f'{ymd.strftime("%Y-%m-%d")}.x.gz')
             cmd_trans = f"netApply.py -t -r -s -i {cov} -o {cov}_trs -x {trsprm}"
             print(f"   {cmd_trans}")
-            run_gipsyx_cmd(gipsyx_rc, cmd_trans, log_file=log_path, debug=debug)
+            run_gipsyx_cmd(gipsyx_rc, cmd_trans, log_file=log_path, debug=debug, cwd=tmpdir)
             shutil.move(cov, cov + "_nf")
             shutil.copy(cov + "_trs", cov)
             label += ".NFtrs"
