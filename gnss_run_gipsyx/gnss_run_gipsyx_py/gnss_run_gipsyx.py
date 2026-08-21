@@ -452,7 +452,7 @@ def build_realtime_window(config, fid, ymd, header_opts, teqcoptions, tmpdir, ri
     parts = data_delay.split()
     if parts and parts[0].isdigit():
         delay_minutes = int(parts[0])
-    end_window = (datetime.utcnow() - timedelta(minutes=delay_minutes)).strftime("%Y%m%d%H%M%S")
+    end_window = (datetime.now(datetime.UTC) - timedelta(minutes=delay_minutes)).strftime("%Y%m%d%H%M%S")
 
     merged = rinex_today
     run_cmd(f'teqc -phc +quiet -e {end_window} -dh 30 "{rinex1}" "{rinex2}" "{rinex3}" > "{merged}"', verbose=verbose)
@@ -515,7 +515,7 @@ def process_day(config, opts, fid, ymd, tmpdir, base_header, verbose):
     if verbose or rc != 0:
         print(f"   raw2rinex \"{raw}\" {rinex} {teqcopt}")
 
-    today = datetime.utcnow().strftime("%Y/%m/%d")
+    today = datetime.now(datetime.UTC).strftime("%Y/%m/%d")
     if realtime and ymd.strftime("%Y/%m/%d") == today:
         rinex = build_realtime_window(config, fid, ymd, header_opts, teqcoptions, tmpdir, rinex, verbose)
         opts["orbits"] = ["ultra"]
