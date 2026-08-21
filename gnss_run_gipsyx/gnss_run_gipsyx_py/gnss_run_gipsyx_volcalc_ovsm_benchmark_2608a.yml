@@ -81,7 +81,7 @@ dest: /home/ovsgnss/080_RESULTS_GIPSYX/gipsyx_results_playgrd/OVSM_benchmark_260
 # Gd2e.py options.
 gipsyoptions: '-runType PPP'
 # Teqc options.
-teqcoptions: "+quiet -O.ag 'IPGP' -O.op 'WO' -C2 -O.-obs C2 -O.-obs C5 -O.dec 30s -max_rx_SVs 40"
+teqcoptions: ""
 
 # Download_orbit options.
 download_orbit: true
