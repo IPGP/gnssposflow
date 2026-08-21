@@ -60,13 +60,31 @@ def run_cmd(cmd, log_file=None, verbose=False, check=False, cwd=None, env=None):
     return proc.returncode
 
 
+def expand_braces(pattern):
+    """Expands Bash-style brace alternatives recursively."""
+    match = re.search(r"\{([^{}]*)\}", pattern)
+    if not match:
+        return [pattern]
+
+    expanded = []
+    for alternative in match.group(1).split(","):
+        replacement = pattern[:match.start()] + alternative + pattern[match.end():]
+        expanded.extend(expand_braces(replacement))
+    return expanded
+
+
 def expand_fmt(fmt_template, variables):
-    """Expands a bash-like template string containing $VAR or ${VAR}
-    placeholders (equivalent to bash's eval "echo $FMT")."""
+    """Expands variables and Bash-style brace alternatives in an input fmt.
+
+    The return value is a list because one format can represent several
+    glob patterns, such as ``{$FID,$sta}*{crx,d\\.}*``.
+    """
     def repl(match):
         name = match.group(1) or match.group(2)
         return str(variables.get(name, ""))
-    return re.sub(r"\$(\w+)|\$\{(\w+)\}", repl, fmt_template)
+    substituted = re.sub(r"\$(\w+)|\$\{(\w+)\}", repl, fmt_template)
+    expanded = expand_braces(substituted)
+    return [re.sub(r"\\+([.])", r"\1", pattern) for pattern in expanded]
 
 
 def build_day_list(days, start_dates=None, utc=True):

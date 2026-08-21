@@ -30,6 +30,11 @@ def has_converto():
 def resolve_raw_files(rawdir):
     """Resolves the input raw file list, equivalent to:
     `[ -d "$rawdir" ] && find $rawdir -type f || ls $rawdir`"""
+    if isinstance(rawdir, (list, tuple)):
+        files = []
+        for pattern in rawdir:
+            files.extend(resolve_raw_files(pattern))
+        return sorted(set(files))
     if os.path.isdir(rawdir):
         files = []
         for root, _dirs, fnames in os.walk(rawdir):

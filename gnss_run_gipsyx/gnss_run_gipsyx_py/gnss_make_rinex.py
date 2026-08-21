@@ -11,6 +11,7 @@ Author: Baptiste Camus (original bash)
 """
 
 import argparse
+import glob
 import os
 import sys
 
@@ -156,8 +157,13 @@ def gnss_make_rinex(config, days, stations=None, start_dates=None, infosrc_overr
             variables = dict(FROM=from_dir, FID=fid, sta=sta, yyyy=yyyy, yy=yyyy[2:4], mm=mm, dd=dd, doy=doy)
             raw = expand_fmt(fmt, variables)
 
-            has_raw = os.path.isdir(raw) and any(os.path.isfile(os.path.join(root, f))
-                                                  for root, _d, files in os.walk(raw) for f in files)
+            has_raw = any(
+                (os.path.isdir(pattern) and any(
+                    os.path.isfile(os.path.join(root, f))
+                    for root, _d, files in os.walk(pattern) for f in files
+                )) or bool(glob.glob(pattern))
+                for pattern in raw
+            )
             if not has_raw:
                 print(f"   {day_label} no data to process in {raw}.")
                 continue

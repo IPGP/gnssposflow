@@ -493,7 +493,7 @@ def process_day(config, opts, fid, ymd, tmpdir, base_header, verbose):
 
     variables = dict(FROM=from_dir, FID=fid, sta=sta, yyyy=yyyy, yy=yyyy[2:4], mm=mm, dd=dd, doy=doy)
     raw = expand_fmt(fmt, variables)
-    if not glob.glob(raw):
+    if not any(glob.glob(pattern) for pattern in raw):
         print(f"   no data to process in {raw}.")
         return
 
