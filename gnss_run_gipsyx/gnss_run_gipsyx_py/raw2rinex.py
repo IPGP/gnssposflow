@@ -79,7 +79,7 @@ def select_conversion_inputs(tmpdir, verbose=False):
     # ------ RINEX2 ------
     rf = find_iname(tmpdir, "*.??o")
     if rf:
-        print("   Found some RINEX2 files: proceeding...")
+        print(f"   Found some RINEX2 files: {rf}, proceeding...")
         for f in rf:
             with open(f, "r", errors="ignore") as fh:
                 first_token = fh.readline().split()[:1]
@@ -98,7 +98,7 @@ def select_conversion_inputs(tmpdir, verbose=False):
     # --- RINEX2 Hatanaka ---
     rf = find_iname(tmpdir, "*.??d.Z", "*.??d.gz", "*.??d")
     if rf:
-        print("   Found some RINEX2 Hatanaka files: proceeding...")
+        print(f"   Found some RINEX2 Hatanaka files: {rf}, proceeding...")
         for f in rf:
             if f.endswith(".Z") or f.endswith(".gz"):
                 run_cmd(f'gunzip -f "{f}"', verbose=verbose)
@@ -111,13 +111,13 @@ def select_conversion_inputs(tmpdir, verbose=False):
     # ------ RINEX3 ------
     rf = find_iname(tmpdir, "*.rnx")
     if rf:
-        print("   Found some RINEX3 files: proceeding...")
+        print(f"   Found some RINEX3 files: {rf}, proceeding...")
         sel.update(rawfiles=rf, obsfiles=rf, teqcfmt="", skipteqc=1, skipconverto=0)
 
     # --- RINEX3 Hatanaka ---
     rf = find_iname(tmpdir, "*.crx.gz", "*.crx")
     if rf:
-        print("   Found some RINEX3 Hatanaka files: proceeding...")
+        print(f"   Found some RINEX3 Hatanaka files: {rf}, proceeding...")
         for f in rf:
             if f.endswith(".gz"):
                 run_cmd(f'gunzip -f "{f}"', verbose=verbose)
@@ -131,14 +131,14 @@ def select_conversion_inputs(tmpdir, verbose=False):
     # ------ RAW manufacturer files ------
     rf = find_iname(tmpdir, "*.m??")
     if rf:
-        print("   Found some Leica files: proceeding...")
+        print(f"   Found some Leica files: {rf}, proceeding...")
         obsfiles = find_iname(tmpdir, "*.m??")
         sel.update(rawfiles=rf, obsfiles=obsfiles, navfiles=rf, teqcfmt="-lei mdb",
                     skipteqc=0, skipconverto=1)
 
     rf = find_iname(tmpdir, "*.T02")
     if rf:
-        print("   Found some Trimble files: proceeding...")
+        print(f"   Found some Trimble files: {rf}, proceeding...")
         for f in rf:
             run_cmd(f'runpkr00 -g -d "{f}"', verbose=verbose)
         rawfiles = find_iname(tmpdir, "*.tgd")
