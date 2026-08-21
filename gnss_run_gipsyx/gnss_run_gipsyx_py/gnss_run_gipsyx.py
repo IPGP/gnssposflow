@@ -163,7 +163,7 @@ def build_teqc_header_opts(header):
     if header.get("anttype"):
         opts += f' -O.at "{header["anttype"]}"'
     if header.get("posxyz"):
-        opts += f' -O.px {" ".join(header["posxyz"].split())}'
+        opts += f' -O.px "{' '.join(header["posxyz"].split())}"'
     return opts
 
 
