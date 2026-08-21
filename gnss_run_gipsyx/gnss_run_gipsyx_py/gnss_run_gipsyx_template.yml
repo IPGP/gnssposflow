@@ -1,0 +1,102 @@
+###############################################################################
+# Template configuration file for script gnss_run_gipsyx.py (must be in the
+# same directory, or pass its path as CONF argument).
+# Please copy, rename and edit it for each "network".
+#
+# Created: 2019-02-25 (as .rc) / converted to YAML 2026-08-21
+
+# main temporary directory (/tmp per default, change is recommended)
+tmpdirmain: /tmp
+
+# GipsyX's own rc file, sourced (in a bash subshell) before every GipsyX
+# command (gd2e.py, netApply.py, netApplyNonLinear.py...)
+gipsyx_rc: /home/wo/GipsyX-1.2/rc_GipsyX.sh
+
+# grid of a local WebObs that contains the station list (nodes)
+grid: null
+noderoot: null
+# ... or a plain list of station codes (space separated), used if grid is null
+nodes: null
+
+# optional site logs to overwrite rinex headers (antenna and receiver codes)
+# - option 1: station.info file (Gamit)
+station_info: null
+# - option 2: site log directory (recommended)
+sitelog: null
+
+# base directory that contains the raw data
+from: /home/wo/rawdata/GNSS
+
+# directory structure of the raw data (evaluated with $-style substitution)
+# valid variables are: $FID, $sta (lowercase FID), $yyyy, $yy, $mm, $dd, $doy, $bb
+fmt: '$FROM/$FID/$yyyy/$mm/$dd'
+
+# base directory for output results
+dest: /home/wo/GNSS/gipsyx
+
+# base directory to store local orbits (optional)
+orbitsdir: /home/wo/GNSS/JPL_Local_Orbits
+
+# true value will download orbit
+download_orbit: true
+
+# download_orbit.py options (see download_orbit.py)
+download_options: '-r 30'
+# "-r 30": orbits older than 30 day are removed
+
+# gd2e.py options
+gipsyoptions: '-runType PPP'
+
+# teqc options: Please take a deep look at www.unavco.org TEQC tutorial!
+teqcoptions: '+quiet -O.pe 0 0 0 -C2 -O.-obs C2 -O.-obs C5 -O.dec 30s -max_rx_SVs 50 -n_GLONASS 27'
+
+# true value will save debug.tree file (contains 'TropoDry' value)
+save_debug_tree: true
+
+# true value will add troposphere results in .tdp files (.Trop.*)
+trop_tdp: false
+
+# display some rinex header in case of error
+error_regex_rinex: "REC #|ANT #|# / TYPES OF OBSERV|MARKER NAME|APPROX POSITION XYZ"
+
+# realtime processing (set true if wanted)
+realtime: false
+
+# data delay for realtime processing
+data_delay: "5 min"
+
+###### Processing details management
+# verbose mode & temporary folders will not be deleted
+debug: false
+
+# Temporary folders are stored in a .fullog.7z file (7zip needed)
+fullog: false
+
+###### Advanced geodetic modes
+
+# use fiducial (regular) or non-fiducial (NF) orbits.
+# nforb option will add '-prodTypeGNSS nf -gdCov' in gipsyoptions
+# and will perform the post-processing re-alignement.
+# leave nforb: false if you are not sure of what you are doing
+# *** Detailed Note:
+# JPL's Fiducial orbits are directly aligned to ITRF.
+# But the usage of Non-fiducial orbits are recommended by
+# the JPL and the geodetic community.
+# Coordinates computed with non Fiducial orbits require
+# a re-alignement to the ITRF with external Helmert parameters
+nforb: false
+
+# Apply Center-of-Mass > Center-of-Figure transformation
+# cm2cf option will add '-gdCov' in gipsyoptions
+# and will perform a post-processing CM > CF transformation.
+# Activating cm2cf is recommended, but stays off per default
+# *** Detailed Note:
+# Since August 2024, JPL provides its orbits in
+# IGS20 (~ITRF2020) w.r.t. Earth's Center of Mass (CM).
+# For volcanological studies, Earth's Center of Figure (CF)
+# is a better origin point (no seasonal signal visible).
+# Thus, a CM > CF transformation is needed.
+cm2cf: false
+
+# ANTEX file for the -antexFile gd2e.py option (optional)
+antex: null

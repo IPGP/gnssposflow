@@ -1,0 +1,40 @@
+###############################################################################
+# Template configuration file for script gnss_make_rinex.py (must be in the
+# same directory, or pass its path as CONF argument).
+# Please copy, rename and edit it for each "network".
+#
+# Created: 2022-03-25 (as .rc) / converted to YAML 2026-08-21
+
+# default list of station codes (space separated), null to use GRID instead
+nodes: null
+
+# ... or a grid of a local WebObs that contains the station list (nodes).
+grid: PROC.GIPSYX
+noderoot: /etc/webobs.d/GRID2NODES/PROC.GIPSYX.
+
+# site information source used to overwrite rinex headers if empty
+# (antenna type, receiver codes, etc.). Can be overridden with "-i".
+# valid values: SITELOG (recommended) / WEBOBS / STATION_INFO
+infosrc: SITELOG
+
+# site information source parameters:
+# - sitelog directory, must be filled to use SITELOG as infosrc
+sitelog: /opt/webobs/rawdata/GNSS/site_log
+# - station.info file (Gamit), must be filled to use STATION_INFO as infosrc
+station_info: null
+# - webobs node informations, grid and noderoot must be filled to use WEBOBS
+#   as infosrc (FID_ANTENNA and FID_RECEIVER must be set in the node config)
+
+# base directory that contains the raw data
+from: /opt/webobs/rawdata/GNSS/rawdata
+
+# directory structure of the raw data (evaluated with $-style substitution)
+# valid variables are: $FID, $sta (lowercase FID), $yyyy, $yy, $mm, $dd, $doy
+fmt: '$FROM/$FID/$yyyy/$mm/$dd'
+
+# base directory for output results
+# output path format will be $DEST/GNSS/rinex/30s/$FID/$yyyy
+dest: /opt/webobs/rawdata
+
+# teqc options: Please take a deep look at www.unavco.org TEQC tutorial!
+teqcoptions: '+quiet -O.pe 0 0 0 -C2 -O.-obs C2 -O.-obs C5 -O.dec 30s -max_rx_SVs 50 -n_GLONASS 27'
