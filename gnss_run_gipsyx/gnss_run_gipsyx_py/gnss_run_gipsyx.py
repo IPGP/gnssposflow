@@ -26,6 +26,7 @@ import shutil
 import signal
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, UTC
 
 from gnss_common import (build_day_list, check_home_partition_usage,
@@ -165,7 +166,8 @@ def build_teqc_header_opts(header):
     if header.get("anttype"):
         opts += f' -O.at "{header["anttype"]}"'
     if header.get("posxyz"):
-        opts += f' -O.px "{' '.join(header["posxyz"].split())}"'
+        posxyz = " ".join(header["posxyz"].split())
+        opts += f' -O.px "{posxyz}"'
     return opts
 
 
@@ -200,6 +202,8 @@ def build_arg_parser():
 
     parser.add_argument("-force", dest="force", action="store_true",
                          help="forces the process despite existence of final results")
+    parser.add_argument("-j", "--jobs", dest="jobs", type=int, default=1,
+                         help="number of parallel station jobs to run (default: 1)")
     parser.add_argument("-lock", dest="lock", action="store_true",
                          help="creates a lock file to prevent multiple process of gnss_run_gipsyx")
     parser.add_argument("-debug", dest="debug", action="store_true",
@@ -220,8 +224,9 @@ ORBIT_CHOICE_MESSAGE = {
 def parse_options(args):
     """Builds the opts dict used throughout the script from a parsed
     argparse.Namespace."""
+    jobs = max(1, int(args.jobs or 1))
     opts = dict(orbits=["flinn", "ql", "ultra"], force=args.force, debug=args.debug,
-                fullog=args.fullog, stations=None, start_dates=None, lock=args.lock)
+                fullog=args.fullog, stations=None, start_dates=None, lock=args.lock, jobs=jobs)
 
     if args.orbit_choice:
         opts["orbits"] = ORBIT_CHOICE_TO_ORBITS[args.orbit_choice]
@@ -466,14 +471,15 @@ def build_realtime_window(config, fid, ymd, header_opts, teqcoptions, tmpdir, ri
 # --------------------------------------------------------------------------
 
 def process_day(config, opts, fid, ymd, tmpdir, base_header, verbose):
+    local_opts = dict(opts)
     from_dir = config.get("from")
     fmt = config.get("fmt") or "$FROM/$FID/$yyyy/$mm/$dd"
     dest = config.get("dest")
     teqcoptions = config.get("teqcoptions", "")
     realtime = bool(config.get("realtime", False))
     save_debug_tree = bool(config.get("save_debug_tree", False))
-    fullog = opts["fullog"]
-    force = opts["force"]
+    fullog = local_opts["fullog"]
+    force = local_opts["force"]
 
     yyyy = ymd.strftime("%Y")
     mm = ymd.strftime("%m")
@@ -520,10 +526,10 @@ def process_day(config, opts, fid, ymd, tmpdir, base_header, verbose):
     today = datetime.now(UTC).strftime("%Y/%m/%d")
     if realtime and ymd.strftime("%Y/%m/%d") == today:
         rinex = build_realtime_window(config, fid, ymd, header_opts, teqcoptions, tmpdir, rinex, verbose)
-        opts["orbits"] = ["ultra"]
+        local_opts["orbits"] = ["ultra"]
 
     log_path = os.path.join(tmpdir, "gd2e.log")
-    ok = try_orbits(config, opts, fid, ymd, rinex, tmpdir, gipsyres, log_path, verbose)
+    ok = try_orbits(config, local_opts, fid, ymd, rinex, tmpdir, gipsyres, log_path, verbose)
 
     os.makedirs(os.path.join(dest, fid, yyyy), exist_ok=True)
 
@@ -555,6 +561,9 @@ def process_station(config, opts, fid, day_list, tmpdir, grid, proc_dir, nodes_t
     for ymd in day_list:
         process_day(config, opts, fid, ymd, tmpdir, base_header, verbose)
 
+    if not verbose and os.path.isdir(tmpdir):
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
 
 # --------------------------------------------------------------------------
 # main orchestration
@@ -569,23 +578,30 @@ def gnss_run_gipsyx(config, days, opts):
     tmpdirmain = config.get("tmpdirmain") or "/tmp"
     os.environ["TMPDIRMAIN"] = tmpdirmain
 
-    tmpdir = make_tmpdir(tmpdirmain, "gipsyx.")
-
     print("*** GipsyX / OVS GNSS File Processing ***")
 
     nodes, nodes_table, proc_dir = resolve_nodes(config, opts["stations"])
     grid = config.get("grid")
-
     day_list = build_day_list(days, opts["start_dates"])
+    jobs = max(1, int(opts.get("jobs", 1)))
+
+    station_jobs = []
+    for station in nodes:
+        fid = station.strip()
+        station_tmpdir = make_tmpdir(tmpdirmain, "gipsyx.")
+        station_jobs.append((config, dict(opts), fid, day_list, station_tmpdir, grid, proc_dir, nodes_table, verbose))
 
     try:
-        for station in nodes:
-            fid = station.strip()
-            process_station(config, opts, fid, day_list, tmpdir, grid, proc_dir, nodes_table, verbose)
+        if jobs <= 1:
+            for station_job in station_jobs:
+                process_station(*station_job)
+        else:
+            with ThreadPoolExecutor(max_workers=jobs) as executor:
+                futures = [executor.submit(process_station, *station_job) for station_job in station_jobs]
+                for future in as_completed(futures):
+                    future.result()
     finally:
         print("*************************************")
-        if not verbose and os.path.isdir(tmpdir):
-            shutil.rmtree(tmpdir, ignore_errors=True)
 
     return 0
 
