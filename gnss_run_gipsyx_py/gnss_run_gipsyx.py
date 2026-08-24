@@ -193,22 +193,22 @@ def build_arg_parser():
                          help="choose day(s) to start process; DAYS still applies to previous days")
 
     orbit_group = parser.add_mutually_exclusive_group()
-    orbit_group.add_argument("-final", dest="orbit_choice", action="store_const", const="final",
+    orbit_group.add_argument("-fin", "--final", dest="orbit_choice", action="store_const", const="final",
                               help="use only final orbit")
-    orbit_group.add_argument("-rapid", dest="orbit_choice", action="store_const", const="rapid",
+    orbit_group.add_argument("-rap", "--rapid", dest="orbit_choice", action="store_const", const="rapid",
                               help="use only rapid orbit")
-    orbit_group.add_argument("-ultra", dest="orbit_choice", action="store_const", const="ultra",
+    orbit_group.add_argument("-ult", "--ultra", dest="orbit_choice", action="store_const", const="ultra",
                               help="use only ultra orbit")
 
-    parser.add_argument("-force", dest="force", action="store_true",
+    parser.add_argument("-f", "--force", dest="force", action="store_true",
                          help="forces the process despite existence of final results")
     parser.add_argument("-j", "--jobs", dest="jobs", type=int, default=1,
                          help="number of parallel station jobs to run (default: 1)")
-    parser.add_argument("-lock", dest="lock", action="store_true",
+    parser.add_argument("-k","--lock", dest="lock", action="store_true",
                          help="creates a lock file to prevent multiple process of gnss_run_gipsyx")
-    parser.add_argument("-debug", dest="debug", action="store_true",
+    parser.add_argument("-b","--debug", dest="debug", action="store_true",
                          help="verbose mode & temporary folders will not be deleted")
-    parser.add_argument("-fullog", dest="fullog", action="store_true",
+    parser.add_argument("-l","--fullog", dest="fullog", action="store_true",
                          help="full log record, temporary folders stored in a .fullog.7z file (7-zip needed)")
     return parser
 
