@@ -351,8 +351,9 @@ def try_orbits(config, opts, fid, ymd, rinex, tmpdir, gipsyres, log_path, verbos
         for old in glob.glob(f"{gipsyres}.*"):
             os.remove(old)
 
-        #if not os.path.isdir(os.path.dirname(gipsyres)):
-        #    os.makedirs(os.path.dirname(gipsyres), exist_ok=True)
+        # add this extra directory creation, because of a bug (not created at the begining)
+        if not os.path.isdir(os.path.dirname(gipsyres)):
+            os.makedirs(os.path.dirname(gipsyres), exist_ok=True)
 
         if not nforb_loop and not cm2cf:
             write_gipsyres_simple(tdp, gipsyres)
